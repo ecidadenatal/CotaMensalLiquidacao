@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <plugin name="CotaMensalLiquidacao" label="Liquidação Cotas Mensais" plugin-version="1.0" ecidade-version="2.3.36" id-modulo="1">
+
+    <files>
+      <file name="CotaMensalLiquidacao.xml" path="/modification/xml/CotaMensalLiquidacao.xml"/>
+    </files>
+
+  </plugin>
+</manifest>
