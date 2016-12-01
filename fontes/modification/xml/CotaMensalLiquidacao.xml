@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<modification>
+  <name>Cota Mensal Liquidação</name>
+  <ecidade-version>2.3.37</ecidade-version>
+  <file path='forms/db_frmliquidasemordem.php'>
+    <operation>
+      <search><![CDATA[<!-- Extensao [CotaMensalLiquidacao] - Parte 1 -->]]></search>
+      <add position="after">
+        <![CDATA[
+          <tr style="display: none" id="tr-saldo-cotas">
+            <td nowrap><label class="bold" for="saldo_cotas">Saldo das Cotas (Até o Mês)</label></td>
+            <td align=right><? db_input('saldo_cotas', 12, 1, true, 'text', 3, '','','','text-align:right')?></td>
+          </tr>
+          ]]>
+      </add>
+    </operation>
+    <operation>
+      <search><![CDATA[/* Extensao [CotaMensalLiquidacao] - Parte 2 */]]></search>
+      <add position="after">
+        <![CDATA[
+var lValidaCotas = false;
+var nValorCotas = 0;
+]]>
+      </add>
+    </operation>
+    <operation>
+      <search><![CDATA[/* Extensao [CotaMensalLiquidacao] - Parte 3 */]]></search>
+      <add position="after">
+        <![CDATA[
+    var oRequestCotas = {
+      exec : "getCotasMensais",
+      iNumeroEmpenho : iEmpenho
+    }
+    ano_atual = <?= db_getsession('DB_anousu')?>;
+
+    new AjaxRequest("emp4_empenhocotasmensais.RPC.php", oRequestCotas, function(oResponse, lError) {
+
+      $('tr-saldo-cotas').style.display = 'none';
+
+      if (lError) {
+        return alert(oResponse.message.urlDecode());
+      }
+
+      lValidaCotas = oResponse.tem_cotas;
+      nValorCotas  = 0;
+
+      if (lValidaCotas) {
+
+        $('tr-saldo-cotas').style.display = '';
+
+        oResponse.cotas.each(function(oCota) {
+
+          if (oCota.mes <= +oResponse.mes_usu || obj.e60_anousu < ano_atual) {
+            nValorCotas += +oCota.valor;
+          }
+        });
+
+        nValorCotas -= js_strToFloat($('e60_vlrliq').value);
+      }
+
+      nValorCotas = nValorCotas < 0 ? 0 : nValorCotas;
+      $('saldo_cotas').value = js_formatar(nValorCotas, 'f');
+
+    }).setMessage("Carregando dados das cotas.").execute();
+    ]]>
+      </add>
+    </operation>
+    <operation>
+      <search><![CDATA[/* Extensao [CotaMensalLiquidacao] - Parte 4 */]]></search>
+      <add position="after">
+        <![CDATA[
+    if (lValidaCotas && valorTotal > nValorCotas.toFixed(2)) {
+
+      alert('O valor a liquidar é maior que o saldo disponível das cotas mensais até o mês atual.');
+      $('pesquisar').disabled = false;
+      $('confirmar').disabled = false;
+
+      return false;
+    }
+    ]]>
+      </add>
+    </operation>
+  </file>
+
+  <file path="forms/db_frmliquida.php">
+    <operation>
+      <search><![CDATA[<!-- Extensão CotaMensalLiquidacao - pt 1 -->]]></search>
+      <add position="after">
+        <![CDATA[
+          <tr id="saldo-cotas-mensais" style="display:none;">
+            <td><b>Saldo das Cotas (Até o Mês)</b></td>
+            <td align="right">
+              <?php db_input('saldo_disp_liq', 12, null, true, 'text', 3, '','','','text-align:right'); ?>
+              <input type="hidden" id="tem_cotas_mensais">
+            </td>
+          </tr>
+        ]]>
+      </add>
+    </operation>
+
+    <operation>
+      <search><![CDATA[/* Extensão CotaMensalLiquidacao - pt 3 */]]></search>
+      <add position="after">
+        <![CDATA[
+function js_consultaSaldoDisponivelLiquidar(iEmpenho, metodo) {
+
+  if (metodo == "estornarLiquidacaoAJAX") {
+    return;
+  }
+
+  var sUrl = "emp4_empenhocotasmensais.RPC.php";
+
+  var oParametros = {
+    'exec'           : 'getCotasMensais',
+    'iNumeroEmpenho' : iEmpenho
+  };
+
+  var nValorTotalCotas = 0;
+
+  new AjaxRequest(sUrl, oParametros,
+    function(oRetorno, lErro) {
+
+      $('tem_cotas_mensais').value = oRetorno.tem_cotas;
+
+      if (!oRetorno.tem_cotas) {
+      $('saldo-cotas-mensais').style.display = 'none';
+        return;
+      }
+
+      var iMesUsu = parseInt(oRetorno.mes_usu);
+
+      oRetorno.cotas.each(function(oCota){
+        if (iMesUsu >= oCota.mes) {
+          nValorTotalCotas += parseFloat(oCota.valor);
+        }
+      });
+
+      var nValorDisponivelLiquidacao         = nValorTotalCotas - js_strToFloat($F('e60_vlrliq'));
+
+      nValorDisponivelLiquidacao = nValorDisponivelLiquidacao < 0 ? 0 : nValorDisponivelLiquidacao;
+      $('saldo_disp_liq').value              = js_formatar(nValorDisponivelLiquidacao, 'f');
+      $('saldo-cotas-mensais').style.display = 'table-row';
+    }
+  ).asynchronous(false).execute();
+}
+        ]]>
+      </add>
+    </operation>
+
+    <operation>
+      <search><![CDATA[saida += "<input type='checkbox' " + obj.data[i].libera + " onclick='js_marcaLinha(this)'";]]></search>
+      <add position="replace">
+        <![CDATA[
+          saida += "<input data-valor=\"" + obj.data[i].e70_valor  + "\" type='checkbox' " + obj.data[i].libera + " onclick='js_marcaLinha(this)'";
+        ]]>
+      </add>
+    </operation>
+
+    <operation>
+      <search><![CDATA[/* Extensão CotaMensalLiquidacao - pt 5 */]]></search>
+      <add position="after">
+        <![CDATA[
+      var sTemCotasMensais = $F('tem_cotas_mensais');
+
+      if (sTemCotasMensais == 'true') {
+
+        var nSaldoCotasMensais = js_strToFloat($F('saldo_disp_liq'));
+        var nValorTotalNotas   = 0;
+
+        for (var iIndice = 0; iIndice < itens.length; iIndice++) {
+
+          if (itens[iIndice].checked == true) {
+            nValorTotalNotas += js_strToFloat(itens[iIndice].getAttribute('data-valor'));
+          }
+        }
+
+        if (nValorTotalNotas > nSaldoCotasMensais) {
+          alert("O valor a liquidar é maior que o saldo disponível das cotas mensais até o mês atual.");
+          $('pesquisar').disabled = false;
+          $('confirmar').disabled = false;
+          return;
+        }
+      }
+      ]]>
+      </add>
+    </operation>
+
+
+    <operation>
+      <search><![CDATA[/* Extensão CotaMensalLiquidacao - pt 6 */]]></search>
+      <add position="after">
+        <![CDATA[
+    var iNumEmpenho = $F('e60_numemp');
+    js_consultaSaldoDisponivelLiquidar(iNumEmpenho, '<?=$metodo?>');
+         ]]>
+      </add>
+    </operation>
+  </file>
+
+  <file path="emp4_empenhocotasmensais.RPC.php">
+    <operation>
+      <search><![CDATA[/* Extensão CotaMensalLiquidacao - Parte 1 */]]></search>
+      <add position="after">
+        <![CDATA[
+      require_once Modification::getFile("classes/db_conlancamnota_classe.php");
+      $oDaoNota = new cl_conlancamnota();
+      $sSqlDataLiquidacao = $oDaoNota->sql_query_liquidacao("c70_data", "c70_data desc", "e60_numemp = {$oParam->iNumeroEmpenho} and e70_vlrliq <> 0");
+      $rsNotaLiquidacao   = $oDaoNota->sql_record( "{$sSqlDataLiquidacao} limit 1" );
+
+      $oDataLiquidacao = null;
+
+      if ($oDaoNota->numrows > 0) {
+        $oDataLiquidacao = new DBDate(db_utils::fieldsMemory($rsNotaLiquidacao, 0)->c70_data);
+      }
+        ]]>
+      </add>
+    </operation>
+    <operation>
+      <search><![CDATA[/* Extensão CotaMensalLiquidacao - Parte 2 */]]></search>
+      <add position="after">
+        <![CDATA[
+        if (!empty($oDataLiquidacao)) {
+
+          if ($oDataEmpenho->getAno() < $oDataLiquidacao->getAno() || ($oDataEmpenho->getAno() == $oDataLiquidacao->getAno() && $oCotaMensal->getMes() <= $oDataLiquidacao->getMes()) ) {
+            $oCota->permitealterar = false;
+          }
+        }
+        ]]>
+      </add>
+    </operation>
+    <operation>
+      <search><![CDATA[/* Extensão CotaMensalLiquidacao - Parte 3 */]]></search>
+      <add position="after">
+        <![CDATA[
+      $sDataUsu = date('Y-m-d', db_getsession("DB_datausu"));
+      $oDataUsu = new DBDate($sDataUsu);
+      if ($oEmpenho->isRestoAPagar(db_getsession('DB_anousu'))) {
+        $lCotaMensais = false;
+      }
+      $oRetorno->mes_usu   = $oDataUsu->getMes();
+      $oRetorno->tem_cotas = $lCotaMensais;
+        ]]>
+      </add>
+    </operation>
+  </file>
+
+  <file path="classes/db_conlancamnota_classe.php">
+    <operation>
+      <search><![CDATA[/* Extensão CotaMensalLiquidacao */]]></search>
+      <add position="after">
+        <![CDATA[
+  function sql_query_liquidacao($sCampos = "*", $sOrder = null, $sWhere = "") {
+
+    $sSql  = "select {$sCampos}                                                                   ";
+    $sSql .= " from conlancamnota                                                                 ";
+    $sSql .= "      inner join conlancam  on  conlancam.c70_codlan = conlancamnota.c66_codlan     ";
+    $sSql .= "      inner join empnota  on  empnota.e69_codnota = conlancamnota.c66_codnota       ";
+    $sSql .= "      inner join empnotaele  on  empnotaele.e70_codnota = conlancamnota.c66_codnota ";
+    $sSql .= "      inner join db_usuarios  on  db_usuarios.id_usuario = empnota.e69_id_usuario   ";
+    $sSql .= "      inner join empempenho  on  empempenho.e60_numemp = empnota.e69_numemp         ";
+
+    if (!empty($sWhere)) {
+      $sSql .= " where {$sWhere} ";
+    }
+
+    if (!empty($sOrder)) {
+      $sSql .= " order by {$sOrder} ";
+    }
+
+    return $sSql;
+  }
+        ]]>
+      </add>
+    </operation>
+  </file>
+
+</modification>
