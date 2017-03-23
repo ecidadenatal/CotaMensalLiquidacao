@@ -4,29 +4,33 @@
   <ecidade-version>2.3.37</ecidade-version>
   <file path='forms/db_frmliquidasemordem.php'>
     <operation>
-      <search><![CDATA[<!-- Extensao [CotaMensalLiquidacao] - Parte 1 -->]]></search>
-      <add position="after">
-        <![CDATA[
-          <tr style="display: none" id="tr-saldo-cotas">
-            <td nowrap><label class="bold" for="saldo_cotas">Saldo das Cotas (Até o Mês)</label></td>
-            <td align=right><? db_input('saldo_cotas', 12, 1, true, 'text', 3, '','','','text-align:right')?></td>
-          </tr>
+      <search regex="true"><![CDATA[(<tr><td.*<\?.*\s*db_input\('e60_vlrpag'.*?>\s*<\/td>\s*<\/tr>)]]></search>
+      <add>
+        <![CDATA[$1
+              <!-- Plugin [CotaMensalLiquidacao] -->
+              <tr style="display: none" id="tr-saldo-cotas">
+                <td nowrap><label class="bold" for="saldo_cotas">Saldo das Cotas (Até o Mês)</label></td>
+                <td align=right><? db_input('saldo_cotas', 12, 1, true, 'text', 3, '','','','text-align:right')?></td>
+              </tr>
           ]]>
       </add>
     </operation>
     <operation>
-      <search><![CDATA[/* Extensao [CotaMensalLiquidacao] - Parte 2 */]]></search>
-      <add position="after">
-        <![CDATA[
-var lValidaCotas = false;
-var nValorCotas = 0;
-]]>
+      <search regex="true"><![CDATA[(function\s*js_saida\(.*\)\s*{)]]></search>
+      <add>
+        <![CDATA[/* Extensao [CotaMensalLiquidacao] */
+  var lValidaCotas = false;
+  var nValorCotas = 0;
+  
+  $1]]>
       </add>
     </operation>
     <operation>
-      <search><![CDATA[/* Extensao [CotaMensalLiquidacao] - Parte 3 */]]></search>
-      <add position="after">
-        <![CDATA[
+      <search regex="true" flag="U"><![CDATA[((iEmpenho\s*=\s*obj.e60_numemp\s*;)(((\n*.*)*)function\s*js_marcaLinha\(obj\)\s*{))]]></search>
+      <add>
+        <![CDATA[$2
+        
+    /* Extensao [CotaMensalLiquidacao] */    
     var oRequestCotas = {
       exec : "getCotasMensais",
       iNumeroEmpenho : iEmpenho
@@ -62,31 +66,35 @@ var nValorCotas = 0;
       $('saldo_cotas').value = js_formatar(nValorCotas, 'f');
 
     }).setMessage("Carregando dados das cotas.").execute();
+    
+    $3 $5
     ]]>
       </add>
     </operation>
     <operation>
-      <search><![CDATA[/* Extensao [CotaMensalLiquidacao] - Parte 4 */]]></search>
-      <add position="after">
+      <search regex="true"><![CDATA[(js_divCarregando\(.*('|")msgLiq('|")\);)]]></search>
+      <add>
         <![CDATA[
-    if (lValidaCotas && valorTotal > nValorCotas.toFixed(2)) {
-
-      alert('O valor a liquidar é maior que o saldo disponível das cotas mensais até o mês atual.');
-      $('pesquisar').disabled = false;
-      $('confirmar').disabled = false;
-
-      return false;
-    }
-    ]]>
+      /* Extensao [CotaMensalLiquidacao] */  
+      if (lValidaCotas && valorTotal > nValorCotas.toFixed(2)) {
+      
+        alert('O valor a liquidar é maior que o saldo disponível das cotas mensais até o mês atual.');
+        $('pesquisar').disabled = false;
+        $('confirmar').disabled = false;
+      
+        return false;
+      }
+      
+      $1]]>
       </add>
     </operation>
   </file>
 
   <file path="forms/db_frmliquida.php">
     <operation>
-      <search><![CDATA[<!-- Extensão CotaMensalLiquidacao - pt 1 -->]]></search>
-      <add position="after">
-        <![CDATA[
+      <search regex="true"><![CDATA[(<tr>\s*\n*\s*<td.*class=table_header>\s*\n*\s*<\?=\$labelVal\?>\s*\n*\s*<\/td>\s*\n*\s*<\/tr>)]]></search>
+      <add>
+        <![CDATA[$1
           <tr id="saldo-cotas-mensais" style="display:none;">
             <td><b>Saldo das Cotas (Até o Mês)</b></td>
             <td align="right">
@@ -99,8 +107,8 @@ var nValorCotas = 0;
     </operation>
 
     <operation>
-      <search><![CDATA[/* Extensão CotaMensalLiquidacao - pt 3 */]]></search>
-      <add position="after">
+      <search regex="true"><![CDATA[(function\s*js_marca\(.*\)\s*{)]]></search>
+      <add>
         <![CDATA[
 function js_consultaSaldoDisponivelLiquidar(iEmpenho, metodo) {
 
@@ -143,23 +151,22 @@ function js_consultaSaldoDisponivelLiquidar(iEmpenho, metodo) {
     }
   ).asynchronous(false).execute();
 }
-        ]]>
+        
+$1]]>
       </add>
     </operation>
 
     <operation>
-      <search><![CDATA[saida += "<input type='checkbox' " + obj.data[i].libera + " onclick='js_marcaLinha(this)'";]]></search>
-      <add position="replace">
-        <![CDATA[
-          saida += "<input data-valor=\"" + obj.data[i].e70_valor  + "\" type='checkbox' " + obj.data[i].libera + " onclick='js_marcaLinha(this)'";
-        ]]>
+      <search regex="true"><![CDATA[saida\s*\+=\s*('|")<input.*onclick\s*=\s*('|")js_marcaLinha\(.*\)('|").*('|");]]></search>
+      <add>
+        <![CDATA[saida += "<input data-valor=\"" + obj.data[i].e70_valor  + "\" type='checkbox' " + obj.data[i].libera + " onclick='js_marcaLinha(this)'";]]>
       </add>
     </operation>
 
     <operation>
-      <search><![CDATA[/* Extensão CotaMensalLiquidacao - pt 5 */]]></search>
-      <add position="after">
-        <![CDATA[
+      <search regex="true"><![CDATA[var\s*sMensagem\s*=\s*('|").*Liquidando.*('|")\s*;]]></search>
+      <add>
+        <![CDATA[var sMensagem = "Aguarde, Liquidando notas";  
       var sTemCotasMensais = $F('tem_cotas_mensais');
 
       if (sTemCotasMensais == 'true') {
@@ -187,9 +194,10 @@ function js_consultaSaldoDisponivelLiquidar(iEmpenho, metodo) {
 
 
     <operation>
-      <search><![CDATA[/* Extensão CotaMensalLiquidacao - pt 6 */]]></search>
-      <add position="after">
-        <![CDATA[
+      <search regex="true" flag="U"><![CDATA[(if\s*\(iOperacao\s*==\s*1\s*&&.*\)\s*{((\n*.*)*)\$\('pesquisar'\).disabled\s*=\s*false\s*;)]]></search>
+      <add>
+        <![CDATA[$1
+        
     var iNumEmpenho = $F('e60_numemp');
     js_consultaSaldoDisponivelLiquidar(iNumEmpenho, '<?=$metodo?>');
          ]]>
@@ -199,9 +207,10 @@ function js_consultaSaldoDisponivelLiquidar(iEmpenho, metodo) {
 
   <file path="emp4_empenhocotasmensais.RPC.php">
     <operation>
-      <search><![CDATA[/* Extensão CotaMensalLiquidacao - Parte 1 */]]></search>
-      <add position="after">
-        <![CDATA[
+      <search regex="true"><![CDATA[\$nValorREversoCotas\s*=\s*0\s*;]]></search>
+      <add>
+        <![CDATA[$1
+        
       require_once Modification::getFile("classes/db_conlancamnota_classe.php");
       $oDaoNota = new cl_conlancamnota();
       $sSqlDataLiquidacao = $oDaoNota->sql_query_liquidacao("c70_data", "c70_data desc", "e60_numemp = {$oParam->iNumeroEmpenho} and e70_vlrliq <> 0");
@@ -212,26 +221,7 @@ function js_consultaSaldoDisponivelLiquidar(iEmpenho, metodo) {
       if ($oDaoNota->numrows > 0) {
         $oDataLiquidacao = new DBDate(db_utils::fieldsMemory($rsNotaLiquidacao, 0)->c70_data);
       }
-        ]]>
-      </add>
-    </operation>
-    <operation>
-      <search><![CDATA[/* Extensão CotaMensalLiquidacao - Parte 2 */]]></search>
-      <add position="after">
-        <![CDATA[
-        if (!empty($oDataLiquidacao)) {
-
-          if ($oDataEmpenho->getAno() < $oDataLiquidacao->getAno() || ($oDataEmpenho->getAno() == $oDataLiquidacao->getAno() && $oCotaMensal->getMes() <= $oDataLiquidacao->getMes()) ) {
-            $oCota->permitealterar = false;
-          }
-        }
-        ]]>
-      </add>
-    </operation>
-    <operation>
-      <search><![CDATA[/* Extensão CotaMensalLiquidacao - Parte 3 */]]></search>
-      <add position="after">
-        <![CDATA[
+      
       $sDataUsu = date('Y-m-d', db_getsession("DB_datausu"));
       $oDataUsu = new DBDate($sDataUsu);
       if ($oEmpenho->isRestoAPagar(db_getsession('DB_anousu'))) {
@@ -239,6 +229,22 @@ function js_consultaSaldoDisponivelLiquidar(iEmpenho, metodo) {
       }
       $oRetorno->mes_usu   = $oDataUsu->getMes();
       $oRetorno->tem_cotas = $lCotaMensais;
+      
+        ]]>
+      </add>
+    </operation>
+    <operation>
+      <search regex="true"><![CDATA[(\$oRetorno->cotas\[\]\s*=\s*\$oCota\s*;)]]></search>
+      <add>
+        <![CDATA[
+        if (!empty($oDataLiquidacao)) {
+
+          if ($oDataEmpenho->getAno() < $oDataLiquidacao->getAno() || ($oDataEmpenho->getAno() == $oDataLiquidacao->getAno() && $oCotaMensal->getMes() <= $oDataLiquidacao->getMes()) ) {
+            $oCota->permitealterar = false;
+          }
+        }
+        
+        $1
         ]]>
       </add>
     </operation>
@@ -246,10 +252,9 @@ function js_consultaSaldoDisponivelLiquidar(iEmpenho, metodo) {
 
   <file path="classes/db_conlancamnota_classe.php">
     <operation>
-      <search><![CDATA[/* Extensão CotaMensalLiquidacao */]]></search>
-      <add position="after">
-        <![CDATA[
-  function sql_query_liquidacao($sCampos = "*", $sOrder = null, $sWhere = "") {
+      <search regex="true"><![CDATA[(function\s*sql_query_file\s*\()]]></search>
+      <add>
+        <![CDATA[function sql_query_liquidacao($sCampos = "*", $sOrder = null, $sWhere = "") {
 
     $sSql  = "select {$sCampos}                                                                   ";
     $sSql .= " from conlancamnota                                                                 ";
@@ -269,7 +274,8 @@ function js_consultaSaldoDisponivelLiquidar(iEmpenho, metodo) {
 
     return $sSql;
   }
-        ]]>
+  
+$1]]>
       </add>
     </operation>
   </file>
