@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <modification>
+  <id>CotaMensalLiquidacao</id>
   <name>Cota Mensal Liquidação</name>
   <ecidade-version>2.3.37</ecidade-version>
   <file path='forms/db_frmliquidasemordem.php'>
