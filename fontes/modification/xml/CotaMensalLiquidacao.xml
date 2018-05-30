@@ -60,7 +60,7 @@
           }
         });
 
-        nValorCotas -= js_strToFloat($('e60_vlrliq').value);
+        nValorCotas -= (js_strToFloat($('e60_vlrliq').value) + js_strToFloat($('e60_vlranu').value));
       }
 
       nValorCotas = nValorCotas < 0 ? 0 : nValorCotas;
